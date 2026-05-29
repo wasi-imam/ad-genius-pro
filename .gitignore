@@ -1,0 +1,16 @@
+# Python cache files — automatically banti hain, zaroorat nahi upload ki
+__pycache__/
+*.pyc
+
+# Virtual environment — bahut bada folder, GitHub pe nahi chahiye
+venv/
+.venv/
+
+# Secret API keys — KABHI bhi GitHub pe mat daalna
+.env
+
+# ChromaDB ka data folder
+chroma_db/
+
+# Windows system files
+Thumbs.dbs
