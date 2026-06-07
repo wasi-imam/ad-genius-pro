@@ -20,6 +20,21 @@ from utils.pdf_exporter import generate_report
 from utils.logger      import app_logger
 
 # ============================================================
+# CHROMADB AUTO-BUILD
+# WHAT: Agar chroma_db/ folder nahi hai toh embedder run karo
+# WHY:  chroma_db/ gitignore mein hai — deploy pe nahi hogi
+#       Pehli baar automatically build ho jaaye
+# WHERE: App start hone pe, kuch bhi render hone se pehle
+# ============================================================
+import os
+if not os.path.exists("./chroma_db"):
+    app_logger.info("ChromaDB not found — building now...")
+    import subprocess
+    subprocess.run(["python", "rag/embedder.py"], check=True)
+    app_logger.info("ChromaDB built successfully.")
+
+
+# ============================================================
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(

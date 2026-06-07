@@ -13,4 +13,4 @@ venv/
 Thumbs.dbs
 
 logs/
-cache_store.json
+cache_store.jsonchroma_db/
