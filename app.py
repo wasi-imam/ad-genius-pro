@@ -231,6 +231,7 @@ st.divider()
 # ============================================================
 defaults = {
     "analysis_done":  False,
+    "strategies":     None,
     "score_data":     None,
     "gaps":           None,
     "rewritten_ad":   None,
@@ -795,6 +796,85 @@ with tab2:
             st.divider()
 
             # ── GAPS ──
+            # ── MULTI-STRATEGY GENERATION ──
+            st.divider()
+            st.markdown("### Multi-Strategy Ad Generation")
+            st.caption("Generate 3 different ad strategies in parallel. Uses 2x API credits.")
+
+            if st.button("Generate 3 Strategies", type="primary", key="gen_strategies"):
+                st.session_state.strategies = None
+
+            if st.session_state.get("strategies") is None and st.session_state.get("gen_strategies_clicked"):
+                with st.spinner("Generating 3 strategies in parallel..."):
+                    from agents.strategy_builder import generate_all_strategies
+                    st.session_state.strategies = generate_all_strategies(
+                        original_ad=st.session_state.original_ad,
+                        gaps=st.session_state.gaps
+                    )
+
+            # Trigger on button click
+            if st.session_state.get("gen_strategies"):
+                if st.session_state.strategies is None:
+                    with st.spinner("Generating Conversion, Emotional, and Urgency strategies..."):
+                        from agents.strategy_builder import generate_all_strategies
+                        st.session_state.strategies = generate_all_strategies(
+                            original_ad=st.session_state.original_ad,
+                            gaps=st.session_state.gaps
+                        )
+
+            if st.session_state.strategies:
+                multi = st.session_state.strategies
+                strategies_list = multi["strategies"]
+
+                # Winner banner
+                winner_key = multi.get("winner_key")
+                if winner_key:
+                    winner = next((s for s in strategies_list if s["strategy_key"] == winner_key), None)
+                    if winner:
+                        st.success("🏆 Winner: {} — Score: {}/100".format(
+                            winner["strategy_name"], winner["score"]
+                        ))
+
+                # 3 strategy cards
+                cols = st.columns(3)
+                for idx, strategy in enumerate(strategies_list):
+                    with cols[idx]:
+                        score     = strategy.get("score", 0) or 0
+                        grade     = strategy.get("grade", "N/A")
+                        is_winner = strategy.get("is_winner", False)
+                        s_color   = "#2ecc71" if score >= 70 else "#f39c12" if score >= 50 else "#e74c3c"
+                        border    = "3px solid #f1c40f" if is_winner else "1px solid {}".format(s_color)
+                        winner_badge = " 🏆" if is_winner else ""
+
+                        st.markdown(
+                            f'<div style="border:{border}; border-radius:12px; padding:16px; margin-bottom:8px;">'                            f'<h4 style="margin:0; color:{s_color};">{strategy["strategy_icon"]} {strategy["strategy_name"]}{winner_badge}</h4>'                            f'<p style="color:#888; font-size:0.8rem; margin:4px 0;">{strategy["description"]}</p>'                            f'<div style="font-size:2rem; font-weight:900; color:{s_color}; text-align:center;">{score}</div>'                            f'<div style="text-align:center; color:{s_color}; font-size:0.9rem;">{grade}</div>'                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+                        st.markdown("**Ad Copy:**")
+                        st.info(strategy["rewritten_ad"])
+                        st.caption("Use when: {}".format(strategy["use_case"]))
+
+                # Dimension comparison
+                st.markdown("#### Dimension Comparison")
+                dim_comp = multi.get("dimension_comparison", {})
+                if dim_comp:
+                    dh0, dh1, dh2, dh3 = st.columns([3,1,1,1])
+                    dh0.markdown("**Dimension**")
+                    dh1.markdown("**🎯 Conv.**")
+                    dh2.markdown("**❤️ Emot.**")
+                    dh3.markdown("**⏰ Urg.**")
+                    for dim, scores in dim_comp.items():
+                        dc0, dc1, dc2, dc3 = st.columns([3,1,1,1])
+                        dc0.write(dim)
+                        dc1.write(scores.get("Conversion", "-"))
+                        dc2.write(scores.get("Emotional", "-"))
+                        dc3.write(scores.get("Urgency", "-"))
+
+                # Recommendation
+                st.markdown("**💡 Recommendation:**")
+                st.info(multi["recommendation"])
+
+            st.divider()
             st.markdown("### Gaps Identified")
             gaps = st.session_state.gaps
             if gaps:
